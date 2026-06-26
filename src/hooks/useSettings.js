@@ -9,7 +9,7 @@ const DEFAULT_SETTINGS = {
   lastLabsGlobalNumber: 0,
   appPassword: null,
   ownerName: 'Shane',
-  businessName: 'Brass Note Studios',
+  businessName: 'Brass Note Labs',
   currentUserRole: 'owner',
   activeView: 'dashboard',
   revisionWindowDays: 14,

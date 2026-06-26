@@ -51,10 +51,10 @@ export default function Sidebar({ activeModule, setActiveModule, badges = {} }) 
 
       <div className="mt-auto px-4 pt-4 border-t" style={{ borderColor: '#1E293B' }}>
         <p className="text-xs" style={{ color: '#8A9BB0' }}>
-          Brass Note Studios
+          Brass Note Labs
         </p>
         <p className="text-xs mt-0.5" style={{ color: '#4A5568' }}>
-          Opus v1.0
+          Preludio v1.0
         </p>
       </div>
     </aside>

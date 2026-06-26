@@ -39,9 +39,9 @@ function AuthGate({ hasPassword, onSetPassword, onAuth }) {
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-2" style={{ color: '#D4A843', fontFamily: 'Playfair Display, serif' }}>
-            Opus
+            Preludio
           </h1>
-          <p className="text-sm" style={{ color: '#8A9BB0' }}>Brass Note Studios · Internal Operations</p>
+          <p className="text-sm" style={{ color: '#8A9BB0' }}>Brass Note Labs · Internal Operations</p>
         </div>
         <div className="rounded-xl p-6" style={{ background: '#0F172A', border: '1px solid #1E293B' }}>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -67,7 +67,7 @@ function AuthGate({ hasPassword, onSetPassword, onAuth }) {
             )}
             <button type="submit" className="w-full py-2.5 rounded text-sm font-semibold"
               style={{ background: '#D4A843', color: '#0A0E1A' }}>
-              {setting ? 'Set Password & Enter' : 'Enter Opus'}
+              {setting ? 'Set Password & Enter' : 'Enter Preludio'}
             </button>
           </form>
         </div>
