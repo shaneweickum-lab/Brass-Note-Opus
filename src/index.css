@@ -1,0 +1,59 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --signal-black: #0A0E1A;
+  --midnight-blue: #0F172A;
+  --card-hover: #131D30;
+  --living-brass: #D4A843;
+  --electric-teal: #0D9488;
+  --warm-cream: #FAF3E0;
+  --gray: #8A9BB0;
+  --danger: #C0392B;
+  --success: #1A5C38;
+  --labs-purple: #4A148C;
+
+  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #0A0E1A;
+  color: #FAF3E0;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+select option {
+  background: #0F172A;
+  color: #FAF3E0;
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #1E293B;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #2E3A4A;
+}
