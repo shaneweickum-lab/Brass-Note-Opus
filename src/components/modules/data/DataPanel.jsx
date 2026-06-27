@@ -129,7 +129,7 @@ export default function DataPanel({ commissions, subscriptions, labs, onImport, 
       <div style={sectionStyle} className="mb-4">
         <p className="text-sm font-semibold mb-1" style={{ color: '#FAF3E0' }}>Import from Excel</p>
         <p className="text-xs mb-4" style={{ color: '#8A9BB0' }}>
-          Select a previously exported Preludio workbook (.xlsx). The file must contain sheets named
+          Select a previously exported BNStudio workbook (.xlsx). The file must contain sheets named
           Commissions, Songs, Subscriptions, and/or Labs.
         </p>
 

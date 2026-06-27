@@ -9,8 +9,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'apple-touch-icon.png', 'pwa-icon.svg'],
       manifest: {
-        name: 'Preludio — Brass Note Labs',
-        short_name: 'Preludio',
+        name: 'BNStudio — Brass Note Labs',
+        short_name: 'BNStudio',
         description: 'Internal operations platform for Brass Note Labs',
         theme_color: '#0F172A',
         background_color: '#0A0E1A',

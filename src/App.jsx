@@ -56,7 +56,7 @@ function AuthScreen({ hasAccounts, onCreateAdmin, onLogin }) {
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-2" style={{ color: '#D4A843', fontFamily: 'Playfair Display, serif' }}>
-            Preludio
+            BNStudio
           </h1>
           <p className="text-sm" style={{ color: '#8A9BB0' }}>Brass Note Labs · Internal Operations</p>
         </div>

@@ -18,7 +18,7 @@ export default function TopNav({ activeView, setActiveView, currentUser, onSetti
     >
       <div className="flex items-center gap-3">
         <span className="text-lg font-bold tracking-wide" style={{ color: '#D4A843', fontFamily: 'Playfair Display, serif' }}>
-          Preludio
+          BNStudio
         </span>
         <span className="text-xs hidden sm:block" style={{ color: '#8A9BB0' }}>
           Brass Note Labs

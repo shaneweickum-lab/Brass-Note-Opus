@@ -207,7 +207,7 @@ export async function downloadTemplate() {
     ],
     {
       sheets: ['Commissions', 'Songs', 'Subscriptions', 'Labs'],
-      fileName: 'preludio-template.xlsx',
+      fileName: 'bnstudio-template.xlsx',
     }
   );
 }
@@ -224,7 +224,7 @@ export async function exportToExcel({ commissions, subscriptions, labs }) {
     ],
     {
       sheets: ['Commissions', 'Songs', 'Subscriptions', 'Labs'],
-      fileName: `preludio-export-${today}.xlsx`,
+      fileName: `bnstudio-export-${today}.xlsx`,
       columns: [
         // Commissions sheet column widths
         undefined,
