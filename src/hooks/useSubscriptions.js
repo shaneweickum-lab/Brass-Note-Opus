@@ -40,6 +40,22 @@ export function useSubscriptions() {
     setSubscriptions((prev) => (prev || []).filter((s) => s.id !== id));
   }, [setSubscriptions]);
 
+  const replaceAllSubscriptions = useCallback((data) => {
+    setSubscriptions(data);
+  }, [setSubscriptions]);
+
+  const mergeSubscriptions = useCallback((incoming) => {
+    setSubscriptions((prev) => {
+      const existing = prev || [];
+      const existingNames = new Set(existing.map((s) => s.name.toLowerCase()));
+      const merged = [...existing];
+      incoming.forEach((s) => {
+        if (!existingNames.has(s.name.toLowerCase())) merged.push(s);
+      });
+      return merged;
+    });
+  }, [setSubscriptions]);
+
   const monthlyTotal = (subscriptions || [])
     .filter((s) => s.status === 'active')
     .reduce((sum, s) => sum + (s.monthlyCost || 0), 0);
@@ -49,6 +65,8 @@ export function useSubscriptions() {
     createSubscription,
     updateSubscription,
     deleteSubscription,
+    replaceAllSubscriptions,
+    mergeSubscriptions,
     monthlyTotal,
   };
 }

@@ -138,6 +138,21 @@ export function useCommissions() {
     setCommissions((prev) => (prev || []).filter((c) => c.internalId !== internalId));
   }, [setCommissions]);
 
+  const replaceAllCommissions = useCallback((data) => {
+    setCommissions(data);
+  }, [setCommissions]);
+
+  const mergeCommissions = useCallback((incoming) => {
+    setCommissions((prev) => {
+      const existing = prev || [];
+      const existingIds = new Set(existing.map((c) => c.id));
+      const updates = new Map(incoming.map((c) => [c.id, c]));
+      const merged = existing.map((c) => updates.has(c.id) ? { ...c, ...updates.get(c.id) } : c);
+      incoming.forEach((c) => { if (!existingIds.has(c.id)) merged.push(c); });
+      return merged;
+    });
+  }, [setCommissions]);
+
   return {
     commissions: commissions || [],
     createCommission,
@@ -147,5 +162,7 @@ export function useCommissions() {
     addCommLog,
     dismissFollowUp,
     deleteCommission,
+    replaceAllCommissions,
+    mergeCommissions,
   };
 }

@@ -50,10 +50,27 @@ export function useLabs() {
     setLabs((prev) => (prev || []).filter((e) => e.internalId !== internalId));
   }, [setLabs]);
 
+  const replaceAllLabs = useCallback((data) => {
+    setLabs(data);
+  }, [setLabs]);
+
+  const mergeLabs = useCallback((incoming) => {
+    setLabs((prev) => {
+      const existing = prev || [];
+      const existingIds = new Set(existing.map((e) => e.id));
+      const updates = new Map(incoming.map((e) => [e.id, e]));
+      const merged = existing.map((e) => updates.has(e.id) ? { ...e, ...updates.get(e.id) } : e);
+      incoming.forEach((e) => { if (!existingIds.has(e.id)) merged.push(e); });
+      return merged;
+    });
+  }, [setLabs]);
+
   return {
     labs: labs || [],
     createExperiment,
     updateExperiment,
     deleteExperiment,
+    replaceAllLabs,
+    mergeLabs,
   };
 }

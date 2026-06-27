@@ -1,4 +1,4 @@
-import { GitBranch, MessageSquare, RefreshCw, FlaskConical, CreditCard } from 'lucide-react';
+import { GitBranch, MessageSquare, RefreshCw, FlaskConical, CreditCard, Database } from 'lucide-react';
 
 const MODULES = [
   { id: 'pipeline', label: 'Pipeline', icon: GitBranch },
@@ -6,6 +6,7 @@ const MODULES = [
   { id: 'revisions', label: 'Revisions', icon: RefreshCw },
   { id: 'labs', label: 'Labs', icon: FlaskConical },
   { id: 'subscriptions', label: 'Subscriptions', icon: CreditCard },
+  { id: 'data', label: 'Data', icon: Database },
 ];
 
 export default function Sidebar({ activeModule, setActiveModule, badges = {} }) {

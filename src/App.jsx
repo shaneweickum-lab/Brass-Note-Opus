@@ -6,6 +6,7 @@ import Dashboard from './components/views/Dashboard';
 import Kanban from './components/views/Kanban';
 import Calendar from './components/views/Calendar';
 import SubList from './components/modules/subscriptions/SubList';
+import DataPanel from './components/modules/data/DataPanel';
 import Settings from './components/views/Settings';
 import { useSettings } from './hooks/useSettings';
 import { useCommissions } from './hooks/useCommissions';
@@ -78,9 +79,9 @@ function AuthGate({ hasPassword, onSetPassword, onAuth }) {
 
 export default function App() {
   const { settings, updateSettings, nextClientNumber, nextGlobalSongNumber, nextLabsGlobalNumber, setPassword, isPasswordSet } = useSettings();
-  const { commissions, createCommission, updateCommission, moveStage, addRevision, addCommLog } = useCommissions();
-  const { labs, createExperiment, updateExperiment } = useLabs();
-  const { subscriptions, createSubscription, updateSubscription, deleteSubscription, monthlyTotal } = useSubscriptions();
+  const { commissions, createCommission, updateCommission, moveStage, addRevision, addCommLog, replaceAllCommissions, mergeCommissions } = useCommissions();
+  const { labs, createExperiment, updateExperiment, replaceAllLabs, mergeLabs } = useLabs();
+  const { subscriptions, createSubscription, updateSubscription, deleteSubscription, monthlyTotal, replaceAllSubscriptions, mergeSubscriptions } = useSubscriptions();
   const { reminders, createReminder } = useReminders();
 
   const [authed, setAuthed] = useState(false);
@@ -126,9 +127,29 @@ export default function App() {
 
   const handleSidebarModule = (m) => {
     setActiveModule(m);
-    if (m !== 'subscriptions') {
-      // Stay on current view
+  };
+
+  const handleImport = (data, mode) => {
+    if (mode === 'replace') {
+      replaceAllCommissions(data.commissions);
+      replaceAllLabs(data.labs);
+      replaceAllSubscriptions(data.subscriptions);
+    } else {
+      mergeCommissions(data.commissions);
+      mergeLabs(data.labs);
+      mergeSubscriptions(data.subscriptions);
     }
+
+    // Update global number counters so new items don't collide
+    const maxSong = data.commissions.flatMap((c) => c.songs || []).reduce((m, s) => Math.max(m, s.globalNumber || 0), 0);
+    const maxLabs = data.labs.reduce((m, l) => Math.max(m, l.labsGlobalNumber || 0), 0);
+    const updates = {};
+    if (maxSong > (settings.lastGlobalSongNumber || 0)) updates.lastGlobalSongNumber = maxSong;
+    if (maxLabs > (settings.lastLabsGlobalNumber || 0)) updates.lastLabsGlobalNumber = maxLabs;
+    if (mode === 'replace') {
+      updates.lastClientNumber = data.commissions.length;
+    }
+    if (Object.keys(updates).length) updateSettings(updates);
   };
 
   const renderContent = () => {
@@ -140,6 +161,17 @@ export default function App() {
           onAdd={createSubscription}
           onUpdate={updateSubscription}
           onDelete={deleteSubscription}
+        />
+      );
+    }
+
+    if (activeModule === 'data') {
+      return (
+        <DataPanel
+          commissions={commissions}
+          subscriptions={subscriptions}
+          labs={labs}
+          onImport={handleImport}
         />
       );
     }
