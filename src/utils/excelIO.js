@@ -259,6 +259,40 @@ export async function exportToExcel({ commissions, subscriptions, labs }) {
 
 // ─── IMPORT ─────────────────────────────────────────────────────────────────
 
+// Read all sheets by numeric index; sheet names with emoji or special chars are unreliable
+async function readAllSheets(file) {
+  const sheets = [];
+  for (let i = 1; i <= 20; i++) {
+    const data = await readXlsxFile(file, { sheet: i }).catch(() => null);
+    if (!data) break;
+    sheets.push(data);
+  }
+  return sheets;
+}
+
+// Classify a sheet by scanning its first few rows for known header keywords
+function classifySheet(data) {
+  for (let i = 0; i < Math.min(6, data.length); i++) {
+    const row = data[i];
+    const headers = row.map((c) => String(c || '').trim());
+    const s = new Set(headers);
+
+    if (s.has('Customer ID') || s.has('First Name') || s.has('Client Name')) {
+      return { type: 'clients', headerIdx: i, headers, isSourceFormat: s.has('First Name') };
+    }
+    if (s.has('Song ID') || (s.has('Global #') && (s.has('Style') || s.has('Style Code')))) {
+      return { type: 'songs', headerIdx: i, headers, isSourceFormat: s.has('Style') && !s.has('Style Code') };
+    }
+    if (s.has('Expense Name') || (s.has('Name') && (s.has('Monthly Cost') || s.has('Monthly Cost ($)')))) {
+      return { type: 'subscriptions', headerIdx: i, headers, isSourceFormat: s.has('Expense Name') };
+    }
+    if (s.has('BNL Song ID') || s.has('BNL ID') || s.has('Hypothesis')) {
+      return { type: 'labs', headerIdx: i, headers, isSourceFormat: s.has('BNL Song ID') };
+    }
+  }
+  return { type: 'unknown' };
+}
+
 function parseYesNo(val) {
   if (val === null || val === undefined || val === '') return false;
   const s = String(val).toLowerCase().trim();
@@ -311,24 +345,37 @@ export async function importFromExcel(file, { generateUUID }) {
   const results = { commissions: [], subscriptions: [], labs: [], errors: [] };
 
   try {
+    // Read every sheet by numeric index — immune to emoji/special-char sheet names
+    const allSheets = await readAllSheets(file);
+
+    let commSheet = null, songSheet = null, subSheet = null, labSheet = null;
+    let commIsSource = false, songIsSource = false, subIsSource = false, labIsSource = false;
+    let commHeaderIdx = 0, songHeaderIdx = 0, subHeaderIdx = 0, labHeaderIdx = 0;
+    let commHeaders = [], songHeaders = [], subHeaders = [], labHeaders = [];
+
+    for (const sheetData of allSheets) {
+      const cls = classifySheet(sheetData);
+      if (cls.type === 'clients' && !commSheet) {
+        commSheet = sheetData; commIsSource = cls.isSourceFormat;
+        commHeaderIdx = cls.headerIdx; commHeaders = cls.headers;
+      } else if (cls.type === 'songs' && !songSheet) {
+        songSheet = sheetData; songIsSource = cls.isSourceFormat;
+        songHeaderIdx = cls.headerIdx; songHeaders = cls.headers;
+      } else if (cls.type === 'subscriptions' && !subSheet) {
+        subSheet = sheetData; subIsSource = cls.isSourceFormat;
+        subHeaderIdx = cls.headerIdx; subHeaders = cls.headers;
+      } else if (cls.type === 'labs' && !labSheet) {
+        labSheet = sheetData; labIsSource = cls.isSourceFormat;
+        labHeaderIdx = cls.headerIdx; labHeaders = cls.headers;
+      }
+    }
+
     // ── Clients / Commissions ────────────────────────────────────────────────
-    // Try sheet named "Clients" (source spreadsheet) then "Commissions" (our export)
-    const commSheet = await readXlsxFile(file, { sheet: 'Clients' }).catch(() => null)
-      || await readXlsxFile(file, { sheet: 'Commissions' }).catch(() => null);
+    if (commSheet && commSheet.length > commHeaderIdx + 1) {
+      const headers = commHeaders;
+      const isSourceFormat = commIsSource;
 
-    if (commSheet && commSheet.length > 1) {
-      // Skip title rows — find the actual header row (has 'Customer ID' or 'First Name')
-      let headerIdx = commSheet.findIndex((row) =>
-        row.some((c) => {
-          const s = String(c || '').trim();
-          return s === 'Customer ID' || s === 'First Name' || s === 'Client Name';
-        })
-      );
-      if (headerIdx === -1) headerIdx = 0;
-      const headers = commSheet[headerIdx].map((h) => String(h || '').trim());
-      const isSourceFormat = headers.includes('First Name'); // source spreadsheet format
-
-      commSheet.slice(headerIdx + 1).forEach((row, idx) => {
+      commSheet.slice(commHeaderIdx + 1).forEach((row, idx) => {
         try {
           const r = rowToObj(headers, row);
           if (isSourceFormat) {
@@ -415,23 +462,17 @@ export async function importFromExcel(file, { generateUUID }) {
             });
           }
         } catch (e) {
-          results.errors.push(`Clients row ${idx + headerIdx + 2}: ${e.message}`);
+          results.errors.push(`Clients row ${idx + commHeaderIdx + 2}: ${e.message}`);
         }
       });
     }
 
     // ── Songs ────────────────────────────────────────────────────────────────
-    // Try "Songs" sheet (both formats use this name)
-    const songSheet = await readXlsxFile(file, { sheet: 'Songs' }).catch(() => null);
-    if (songSheet && songSheet.length > 1) {
-      let headerIdx = songSheet.findIndex((row) =>
-        row.some((c) => String(c || '').trim() === 'Song ID')
-      );
-      if (headerIdx === -1) headerIdx = 0;
-      const headers = songSheet[headerIdx].map((h) => String(h || '').trim());
-      const isSourceFormat = headers.includes('Genre'); // source spreadsheet has full Genre column
+    if (songSheet && songSheet.length > songHeaderIdx + 1) {
+      const headers = songHeaders;
+      const isSourceFormat = songIsSource;
 
-      songSheet.slice(headerIdx + 1).forEach((row) => {
+      songSheet.slice(songHeaderIdx + 1).forEach((row) => {
         const r = rowToObj(headers, row);
         // Customer ID in source format is the base ID (without -N suffix)
         const customerId = String(r['Customer ID'] || '').split('-')[0];
@@ -468,22 +509,11 @@ export async function importFromExcel(file, { generateUUID }) {
     }
 
     // ── Subscriptions / Expenses ─────────────────────────────────────────────
-    // Try "Expenses" (source) then "Subscriptions" (our export)
-    const subSheet = await readXlsxFile(file, { sheet: 'Expenses' }).catch(() => null)
-      || await readXlsxFile(file, { sheet: 'Subscriptions' }).catch(() => null);
+    if (subSheet && subSheet.length > subHeaderIdx + 1) {
+      const headers = subHeaders;
+      const isSourceFormat = subIsSource;
 
-    if (subSheet && subSheet.length > 1) {
-      let headerIdx = subSheet.findIndex((row) =>
-        row.some((c) => {
-          const s = String(c || '').trim();
-          return s === 'Expense Name' || s === 'Name';
-        })
-      );
-      if (headerIdx === -1) headerIdx = 0;
-      const headers = subSheet[headerIdx].map((h) => String(h || '').trim());
-      const isSourceFormat = headers.includes('Expense Name');
-
-      subSheet.slice(headerIdx + 1).forEach((row, idx) => {
+      subSheet.slice(subHeaderIdx + 1).forEach((row, idx) => {
         try {
           const r = rowToObj(headers, row);
           const name = String(r['Expense Name'] || r['Name'] || '').trim();
@@ -509,28 +539,17 @@ export async function importFromExcel(file, { generateUUID }) {
             createdAt: parseDate(r['Created At']) || new Date().toISOString(),
           });
         } catch (e) {
-          results.errors.push(`Expenses row ${idx + headerIdx + 2}: ${e.message}`);
+          results.errors.push(`Expenses row ${idx + subHeaderIdx + 2}: ${e.message}`);
         }
       });
     }
 
     // ── Labs ─────────────────────────────────────────────────────────────────
-    // Try "BN Labs" (source) then "Labs" (our export)
-    const labSheet = await readXlsxFile(file, { sheet: 'BN Labs' }).catch(() => null)
-      || await readXlsxFile(file, { sheet: 'Labs' }).catch(() => null);
+    if (labSheet && labSheet.length > labHeaderIdx + 1) {
+      const headers = labHeaders;
+      const isSourceFormat = labIsSource;
 
-    if (labSheet && labSheet.length > 1) {
-      let headerIdx = labSheet.findIndex((row) =>
-        row.some((c) => {
-          const s = String(c || '').trim();
-          return s === 'BNL Song ID' || s === 'BNL ID' || s === 'Hypothesis';
-        })
-      );
-      if (headerIdx === -1) headerIdx = 0;
-      const headers = labSheet[headerIdx].map((h) => String(h || '').trim());
-      const isSourceFormat = headers.includes('BNL Song ID');
-
-      labSheet.slice(headerIdx + 1).forEach((row, idx) => {
+      labSheet.slice(labHeaderIdx + 1).forEach((row, idx) => {
         try {
           const r = rowToObj(headers, row);
           const id = String(r['BNL Song ID'] || r['BNL ID'] || '').trim();
@@ -573,7 +592,7 @@ export async function importFromExcel(file, { generateUUID }) {
             createdAt: new Date().toISOString(),
           });
         } catch (e) {
-          results.errors.push(`Labs row ${idx + headerIdx + 2}: ${e.message}`);
+          results.errors.push(`Labs row ${idx + labHeaderIdx + 2}: ${e.message}`);
         }
       });
     }
