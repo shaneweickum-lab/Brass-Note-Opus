@@ -31,6 +31,7 @@ export function useLabs() {
       resultCode: null,
       keyFinding: '',
       integrationStatus: null,
+      generationNumber: Number(formData.generationNumber) || null,
       status: formData.status || 'scheduled',
       notes: formData.notes || '',
       createdAt: now,

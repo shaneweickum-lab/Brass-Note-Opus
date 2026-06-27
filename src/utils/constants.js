@@ -32,36 +32,36 @@ export const COMMISSION_TYPES = {
 };
 
 export const TYPE_CODES = {
-  individual: '01',
-  organization: '02',
-  content_creator: '03',
+  individual: '1',
+  organization: '2',
+  content_creator: '3',
 };
 
 export const GENRE_CODES = {
-  '01': 'R&B',
+  '01': 'R&B / Soul',
   '02': 'Pop',
-  '03': 'Hip-Hop',
-  '04': 'Country',
-  '05': 'Gospel',
-  '06': 'Jazz',
+  '03': 'Hip-Hop / Cinematic',
+  '04': 'Gospel / Worship',
+  '05': 'Jazz',
+  '06': 'Country',
   '07': 'Rock',
-  '08': 'Soul',
-  '09': 'Electronic',
-  '10': 'Classical',
-  '11': 'Folk',
-  '12': 'Latin',
-  '13': 'Reggae',
-  '14': 'Blues',
-  '15': 'Metal',
-  '16': 'Indie',
+  '08': 'Classical / Orchestral',
+  '09': 'A Cappella / Vocal',
+  '10': 'Electronic',
+  '11': 'Funk',
+  '12': 'Blues',
+  '13': 'Latin',
+  '14': 'Reggae',
+  '15': 'Folk',
+  '16': 'Cinematic / Soundtrack',
   '17': 'Other',
 };
 
 export const STYLE_CODES = {
-  '01': 'Commission',
-  '02': 'Original',
-  '03': 'Instrumental',
-  '04': 'Demo',
+  '01': 'Commission (Custom for Client)',
+  '02': 'Original Release',
+  '03': 'Instrumental Only',
+  '04': 'Sample / Demo',
 };
 
 export const LYRIC_CODES = {

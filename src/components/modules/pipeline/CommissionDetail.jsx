@@ -189,33 +189,128 @@ export default function CommissionDetail({ commission, onClose, onMoveStage, onA
         )}
 
         {tab === 'songs' && (
-          <div className="space-y-3">
-            {c.songs?.map((song, i) => (
-              <div key={song.songId} className="rounded p-3" style={{ background: '#0A0E1A', border: '1px solid #1E293B' }}>
-                <p className="text-xs font-mono mb-1" style={{ color: '#0D9488' }}>{song.songId}</p>
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div>
-                    <span style={{ color: '#8A9BB0' }}>Genre: </span>
-                    <span style={{ color: '#FAF3E0' }}>{GENRE_CODES[song.genreCode] || '—'}</span>
+          <div className="space-y-4">
+            {c.songs?.map((song, i) => {
+              const upd = (field, value) => {
+                const songs = [...(c.songs || [])];
+                songs[i] = { ...songs[i], [field]: value };
+                onUpdateCommission(c.internalId, { songs });
+              };
+              const sf = { background: '#0A0E1A', border: '1px solid #1E293B', color: '#FAF3E0' };
+              const SInput = ({ field, placeholder, type = 'text', ...rest }) => (
+                <input type={type} className="w-full rounded px-2 py-1.5 text-xs outline-none"
+                  style={sf} value={song[field] ?? ''} placeholder={placeholder}
+                  onChange={(e) => upd(field, type === 'number' ? (e.target.value === '' ? null : Number(e.target.value)) : e.target.value)}
+                  {...rest} />
+              );
+              const SArea = ({ field, placeholder, rows = 2 }) => (
+                <textarea className="w-full rounded px-2 py-1.5 text-xs outline-none resize-none"
+                  style={sf} rows={rows} value={song[field] || ''} placeholder={placeholder}
+                  onChange={(e) => upd(field, e.target.value)} />
+              );
+              const FLbl = ({ t }) => <p className="text-xs mb-1" style={{ color: '#8A9BB0' }}>{t}</p>;
+
+              return (
+                <div key={song.songId} className="rounded-lg p-4 space-y-3" style={{ background: '#0A0E1A', border: '1px solid #1E293B' }}>
+                  {/* Header row */}
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-mono" style={{ color: '#0D9488' }}>{song.songId}</p>
+                    <span className="text-xs px-2 py-0.5 rounded" style={{ background: '#1E293B', color: '#8A9BB0' }}>
+                      {song.deliveryStatus || 'pending'}
+                    </span>
                   </div>
+
+                  {/* Song Title */}
                   <div>
-                    <span style={{ color: '#8A9BB0' }}>Vocal: </span>
-                    <span style={{ color: '#FAF3E0' }}>{VOCAL_CODES[song.vocalCode] || '—'}</span>
+                    <FLbl t="Song Title" />
+                    <SInput field="songTitle" placeholder="Song title..." />
+                  </div>
+
+                  {/* Genre + Sub-Genre */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <FLbl t="Genre" />
+                      <p className="text-xs px-2 py-1.5 rounded" style={{ background: '#1E293B', color: '#FAF3E0' }}>
+                        {GENRE_CODES[song.genreCode] || '—'}
+                      </p>
+                    </div>
+                    <div>
+                      <FLbl t="Sub-Genre" />
+                      <SInput field="subGenre" placeholder="e.g. Intimate Slow-Burn" />
+                    </div>
+                  </div>
+
+                  {/* Vocal + Vocal Type */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <FLbl t="Vocal" />
+                      <p className="text-xs px-2 py-1.5 rounded" style={{ background: '#1E293B', color: '#FAF3E0' }}>
+                        {VOCAL_CODES[song.vocalCode] || '—'}
+                      </p>
+                    </div>
+                    <div>
+                      <FLbl t="Vocal Type" />
+                      <SInput field="vocalTypeDescription" placeholder="e.g. Male Tenor" />
+                    </div>
+                  </div>
+
+                  {/* BPM + Time Sig + Mood */}
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <FLbl t="BPM" />
+                      <SInput field="bpm" placeholder="72" type="number" min={40} max={300} />
+                    </div>
+                    <div>
+                      <FLbl t="Time Sig" />
+                      <SInput field="timeSig" placeholder="4/4" />
+                    </div>
+                    <div>
+                      <FLbl t="Mood" />
+                      <SInput field="mood" placeholder="Bittersweet Nostalgia" />
+                    </div>
+                  </div>
+
+                  {/* Tension Arc */}
+                  <div>
+                    <FLbl t="Tension Arc" />
+                    <SInput field="tensionArc" placeholder="e.g. Gradual Build, Explosive Chorus" />
+                  </div>
+
+                  {/* About the Song */}
+                  <div>
+                    <FLbl t="About the Song" />
+                    <SArea field="aboutSong" placeholder="Occasion, story, emotional intent..." rows={3} />
+                  </div>
+
+                  {/* Instruments / Vocal Elements */}
+                  <div>
+                    <FLbl t="Instruments / Vocal Elements" />
+                    <SArea field="instrumentsVocalElements" placeholder="e.g. Violin Obbligato, Tenor Sax, 808 Sub-Bass..." rows={2} />
+                  </div>
+
+                  {/* Production row */}
+                  <div className="grid grid-cols-2 gap-2 pt-1 border-t" style={{ borderColor: '#1E293B' }}>
+                    <div>
+                      <FLbl t="Suno Version" />
+                      <SInput field="sunoVersion" placeholder="v5.5" />
+                    </div>
+                    <div>
+                      <FLbl t="Generation #" />
+                      <SInput field="generationNumber" placeholder="3" type="number" min={1} />
+                    </div>
+                  </div>
+
+                  {/* Production Notes */}
+                  <div>
+                    <FLbl t="Production Notes" />
+                    <SArea field="productionNotes" placeholder="Internal production notes..." rows={2} />
                   </div>
                 </div>
-                <input
-                  className="w-full rounded px-2 py-1 text-xs outline-none mt-2"
-                  style={inputStyle}
-                  value={song.songTitle || ''}
-                  onChange={(e) => {
-                    const songs = [...c.songs];
-                    songs[i] = { ...song, songTitle: e.target.value };
-                    onUpdateCommission(c.internalId, { songs });
-                  }}
-                  placeholder="Song title..."
-                />
-              </div>
-            ))}
+              );
+            })}
+            {!c.songs?.length && (
+              <p className="text-sm text-center py-6" style={{ color: '#4A5568' }}>No songs on this commission</p>
+            )}
           </div>
         )}
 

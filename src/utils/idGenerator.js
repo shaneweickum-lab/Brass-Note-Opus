@@ -4,10 +4,10 @@ export function generateCustomerId(commissionType, clientNumber) {
   const now = new Date();
   const mm = String(now.getMonth() + 1).padStart(2, '0');
   const dd = String(now.getDate()).padStart(2, '0');
-  const yearDigit = String(now.getFullYear()).slice(-1);
-  const typeCode = TYPE_CODES[commissionType] || '01';
+  const yy = String(now.getFullYear()).slice(-2);
+  const typeDigit = TYPE_CODES[commissionType] || '1';
   const clientNum = String(clientNumber).padStart(2, '0');
-  return `BNS${mm}${dd}${yearDigit}${typeCode}${clientNum}`;
+  return `BNS${mm}${dd}${yy}${typeDigit}${clientNum}`;
 }
 
 export function formatGlobalSongNumber(num) {
