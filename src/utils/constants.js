@@ -127,6 +127,7 @@ export const STORAGE_KEYS = {
   SUBSCRIPTIONS: 'opus:subscriptions',
   SETTINGS: 'opus:settings',
   REMINDERS: 'opus:reminders',
+  ACCOUNTS: 'opus:accounts',
 };
 
 export const PACKAGES = ['First Song', 'EP', 'LP', 'Album', 'Singles Bundle', 'Custom'];

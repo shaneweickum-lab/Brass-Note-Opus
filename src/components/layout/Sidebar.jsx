@@ -6,10 +6,12 @@ const MODULES = [
   { id: 'revisions', label: 'Revisions', icon: RefreshCw },
   { id: 'labs', label: 'Labs', icon: FlaskConical },
   { id: 'subscriptions', label: 'Subscriptions', icon: CreditCard },
-  { id: 'data', label: 'Data', icon: Database },
+  { id: 'data', label: 'Data', icon: Database, adminOnly: true },
 ];
 
-export default function Sidebar({ activeModule, setActiveModule, badges = {} }) {
+export default function Sidebar({ activeModule, setActiveModule, badges = {}, userRole }) {
+  const visible = MODULES.filter((m) => !m.adminOnly || userRole === 'admin');
+
   return (
     <aside
       className="fixed left-0 top-12 bottom-0 flex flex-col py-4 overflow-y-auto"
@@ -18,7 +20,7 @@ export default function Sidebar({ activeModule, setActiveModule, badges = {} }) 
       <p className="px-4 mb-2 text-xs font-semibold uppercase tracking-wider" style={{ color: '#8A9BB0' }}>
         Modules
       </p>
-      {MODULES.map(({ id, label, icon: Icon }) => {
+      {visible.map(({ id, label, icon: Icon }) => {
         const badge = badges[id];
         const isActive = activeModule === id;
         const accentColor = id === 'labs' ? '#4A148C' : '#0D9488';
@@ -51,12 +53,8 @@ export default function Sidebar({ activeModule, setActiveModule, badges = {} }) 
       })}
 
       <div className="mt-auto px-4 pt-4 border-t" style={{ borderColor: '#1E293B' }}>
-        <p className="text-xs" style={{ color: '#8A9BB0' }}>
-          Brass Note Labs
-        </p>
-        <p className="text-xs mt-0.5" style={{ color: '#4A5568' }}>
-          Preludio v1.0
-        </p>
+        <p className="text-xs" style={{ color: '#8A9BB0' }}>Brass Note Labs</p>
+        <p className="text-xs mt-0.5" style={{ color: '#4A5568' }}>Preludio v1.0</p>
       </div>
     </aside>
   );

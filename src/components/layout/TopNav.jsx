@@ -1,4 +1,4 @@
-import { LayoutDashboard, Columns, Calendar, Settings } from 'lucide-react';
+import { LayoutDashboard, Columns, Calendar, Settings, LogOut, UserCircle } from 'lucide-react';
 
 const VIEWS = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -6,7 +6,11 @@ const VIEWS = [
   { id: 'calendar', label: 'Calendar', icon: Calendar },
 ];
 
-export default function TopNav({ activeView, setActiveView, role, onSettings }) {
+export default function TopNav({ activeView, setActiveView, currentUser, onSettings, onSignOut }) {
+  const roleColor = currentUser?.role === 'admin' ? '#D4A843' : '#0D9488';
+  const roleBg = currentUser?.role === 'admin' ? '#D4A84322' : '#0D948822';
+  const roleBorder = currentUser?.role === 'admin' ? '#D4A84344' : '#0D948844';
+
   return (
     <header
       className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4"
@@ -40,18 +44,35 @@ export default function TopNav({ activeView, setActiveView, role, onSettings }) 
       </nav>
 
       <div className="flex items-center gap-2">
-        <span
-          className="text-xs px-2 py-0.5 rounded-full capitalize"
-          style={{ color: '#0D9488', background: '#0D948822', border: '1px solid #0D948844' }}
-        >
-          {role || 'owner'}
-        </span>
+        {currentUser && (
+          <div className="flex items-center gap-1.5">
+            <UserCircle size={14} style={{ color: '#8A9BB0' }} />
+            <span className="text-xs hidden sm:block" style={{ color: '#FAF3E0' }}>
+              {currentUser.username}
+            </span>
+            <span
+              className="text-xs px-2 py-0.5 rounded-full capitalize"
+              style={{ color: roleColor, background: roleBg, border: `1px solid ${roleBorder}` }}
+            >
+              {currentUser.role}
+            </span>
+          </div>
+        )}
         <button
           onClick={onSettings}
           className="p-1.5 rounded transition-colors hover:bg-white/10"
           style={{ color: '#8A9BB0' }}
+          title="Settings"
         >
           <Settings size={16} />
+        </button>
+        <button
+          onClick={onSignOut}
+          className="p-1.5 rounded transition-colors hover:bg-white/10"
+          style={{ color: '#8A9BB0' }}
+          title="Sign out"
+        >
+          <LogOut size={16} />
         </button>
       </div>
     </header>

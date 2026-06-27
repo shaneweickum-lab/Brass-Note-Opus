@@ -9,31 +9,47 @@ import SubList from './components/modules/subscriptions/SubList';
 import DataPanel from './components/modules/data/DataPanel';
 import Settings from './components/views/Settings';
 import { useSettings } from './hooks/useSettings';
+import { useAccounts } from './hooks/useAccounts';
 import { useCommissions } from './hooks/useCommissions';
 import { useLabs } from './hooks/useLabs';
 import { useSubscriptions } from './hooks/useSubscriptions';
 import { useReminders } from './hooks/useReminders';
-import { isOverdue, isTodayOrPast, verifyPassword } from './utils/dateUtils';
+import { isOverdue, isTodayOrPast } from './utils/dateUtils';
 
-function AuthGate({ hasPassword, onSetPassword, onAuth }) {
+// ─── Auth Screen ─────────────────────────────────────────────────────────────
+
+function AuthScreen({ hasAccounts, onCreateAdmin, onLogin }) {
+  const [mode, setMode] = useState('login'); // 'login' | 'setup'
+  const [username, setUsername] = useState('');
+  const [role, setRole] = useState('admin');
   const [pw, setPw] = useState('');
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState('');
-  const setting = !hasPassword;
+
+  const isSetup = !hasAccounts;
 
   const handleSubmit = (e) => {
     e.preventDefault();
     setError('');
-    if (setting) {
-      if (!pw) { setError('Please enter a password.'); return; }
+    const u = username.trim();
+    if (!u) { setError('Please enter a username.'); return; }
+    if (!pw) { setError('Please enter a password.'); return; }
+
+    if (isSetup) {
       if (pw !== confirm) { setError('Passwords do not match.'); return; }
-      onSetPassword(pw);
-      onAuth(null, true);
+      try {
+        onCreateAdmin(u, pw);
+      } catch (err) {
+        setError(err.message);
+      }
     } else {
-      const ok = onAuth(pw, false);
-      if (!ok) setError('Incorrect password.');
+      const ok = onLogin(u, role, pw);
+      if (!ok) setError('Invalid username, role, or password.');
     }
   };
+
+  const inputStyle = { background: '#0A0E1A', border: '1px solid #1E293B', color: '#FAF3E0' };
+  const inputClass = 'w-full rounded px-3 py-2 text-sm outline-none';
 
   return (
     <div className="min-h-screen flex items-center justify-center" style={{ background: '#0A0E1A' }}>
@@ -44,31 +60,89 @@ function AuthGate({ hasPassword, onSetPassword, onAuth }) {
           </h1>
           <p className="text-sm" style={{ color: '#8A9BB0' }}>Brass Note Labs · Internal Operations</p>
         </div>
+
         <div className="rounded-xl p-6" style={{ background: '#0F172A', border: '1px solid #1E293B' }}>
+          {isSetup && (
+            <p className="text-xs mb-4 p-2 rounded" style={{ color: '#D4A843', background: '#D4A84311' }}>
+              First time setup — create your admin account.
+            </p>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-4">
-            {error && <p className="text-sm p-2 rounded" style={{ color: '#C0392B', background: '#C0392B11' }}>{error}</p>}
-            {setting && (
-              <p className="text-xs" style={{ color: '#8A9BB0' }}>First time setup — set your access password.</p>
+            {error && (
+              <p className="text-xs p-2 rounded" style={{ color: '#C0392B', background: '#C0392B11' }}>{error}</p>
             )}
+
             <div>
-              <label className="text-xs block mb-1" style={{ color: '#8A9BB0' }}>
-                {setting ? 'Set Password' : 'Password'}
-              </label>
-              <input type="password" className="w-full rounded px-3 py-2 text-sm outline-none"
-                style={{ background: '#0A0E1A', border: '1px solid #1E293B', color: '#FAF3E0' }}
-                value={pw} onChange={(e) => setPw(e.target.value)} placeholder="Password" autoFocus />
+              <label className="text-xs block mb-1" style={{ color: '#8A9BB0' }}>Username</label>
+              <input
+                className={inputClass}
+                style={inputStyle}
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Enter username"
+                autoFocus
+                autoComplete="username"
+              />
             </div>
-            {setting && (
+
+            {/* Role selector — hidden during first-run setup (always admin) */}
+            {!isSetup && (
               <div>
-                <label className="text-xs block mb-1" style={{ color: '#8A9BB0' }}>Confirm Password</label>
-                <input type="password" className="w-full rounded px-3 py-2 text-sm outline-none"
-                  style={{ background: '#0A0E1A', border: '1px solid #1E293B', color: '#FAF3E0' }}
-                  value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder="Confirm" />
+                <label className="text-xs block mb-1" style={{ color: '#8A9BB0' }}>Role</label>
+                <div className="flex rounded overflow-hidden" style={{ border: '1px solid #1E293B' }}>
+                  {['admin', 'employee'].map((r) => (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => setRole(r)}
+                      className="flex-1 py-2 text-sm font-medium capitalize transition-colors"
+                      style={{
+                        background: role === r ? '#D4A843' : '#0A0E1A',
+                        color: role === r ? '#0A0E1A' : '#8A9BB0',
+                      }}
+                    >
+                      {r === 'admin' ? 'Admin' : 'Employee'}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
-            <button type="submit" className="w-full py-2.5 rounded text-sm font-semibold"
-              style={{ background: '#D4A843', color: '#0A0E1A' }}>
-              {setting ? 'Set Password & Enter' : 'Enter Preludio'}
+
+            <div>
+              <label className="text-xs block mb-1" style={{ color: '#8A9BB0' }}>Password</label>
+              <input
+                className={inputClass}
+                style={inputStyle}
+                type="password"
+                value={pw}
+                onChange={(e) => setPw(e.target.value)}
+                placeholder="Password"
+                autoComplete={isSetup ? 'new-password' : 'current-password'}
+              />
+            </div>
+
+            {isSetup && (
+              <div>
+                <label className="text-xs block mb-1" style={{ color: '#8A9BB0' }}>Confirm Password</label>
+                <input
+                  className={inputClass}
+                  style={inputStyle}
+                  type="password"
+                  value={confirm}
+                  onChange={(e) => setConfirm(e.target.value)}
+                  placeholder="Confirm password"
+                  autoComplete="new-password"
+                />
+              </div>
+            )}
+
+            <button
+              type="submit"
+              className="w-full py-2.5 rounded text-sm font-semibold"
+              style={{ background: '#D4A843', color: '#0A0E1A' }}
+            >
+              {isSetup ? 'Create Admin Account' : 'Sign In'}
             </button>
           </form>
         </div>
@@ -77,33 +151,54 @@ function AuthGate({ hasPassword, onSetPassword, onAuth }) {
   );
 }
 
+// ─── Main App ─────────────────────────────────────────────────────────────────
+
 export default function App() {
-  const { settings, updateSettings, nextClientNumber, nextGlobalSongNumber, nextLabsGlobalNumber, setPassword, isPasswordSet } = useSettings();
+  const { settings, updateSettings, nextClientNumber, nextGlobalSongNumber, nextLabsGlobalNumber } = useSettings();
+  const { accounts, hasAccounts, adminCount, createAccount, deleteAccount, updatePassword, login } = useAccounts();
   const { commissions, createCommission, updateCommission, moveStage, addRevision, addCommLog, replaceAllCommissions, mergeCommissions } = useCommissions();
   const { labs, createExperiment, updateExperiment, replaceAllLabs, mergeLabs } = useLabs();
   const { subscriptions, createSubscription, updateSubscription, deleteSubscription, monthlyTotal, replaceAllSubscriptions, mergeSubscriptions } = useSubscriptions();
   const { reminders, createReminder } = useReminders();
 
-  const [authed, setAuthed] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null); // { username, role }
   const [activeView, setActiveView] = useState('dashboard');
   const [activeModule, setActiveModule] = useState('pipeline');
   const [showSettings, setShowSettings] = useState(false);
 
-  const handleAuth = (pw, isSetup) => {
-    if (isSetup || !isPasswordSet) { setAuthed(true); return true; }
-    if (verifyPassword(pw, settings.appPassword)) { setAuthed(true); return true; }
+  const isAdmin = currentUser?.role === 'admin';
+
+  // ── Auth handlers ──────────────────────────────────────────────────────────
+
+  const handleCreateAdmin = (username, password) => {
+    createAccount(username, password, 'admin'); // throws if duplicate
+    const user = login(username, 'admin', password);
+    setCurrentUser(user);
+  };
+
+  const handleLogin = (username, role, password) => {
+    const user = login(username, role, password);
+    if (user) { setCurrentUser(user); return true; }
     return false;
   };
 
-  if (!authed) {
+  const handleSignOut = () => {
+    setCurrentUser(null);
+    setActiveView('dashboard');
+    setActiveModule('pipeline');
+  };
+
+  if (!currentUser) {
     return (
-      <AuthGate
-        hasPassword={isPasswordSet}
-        onSetPassword={setPassword}
-        onAuth={handleAuth}
+      <AuthScreen
+        hasAccounts={hasAccounts}
+        onCreateAdmin={handleCreateAdmin}
+        onLogin={handleLogin}
       />
     );
   }
+
+  // ── App logic ──────────────────────────────────────────────────────────────
 
   const overdueCount = commissions.filter((c) => isOverdue(c.deliveryDeadline, c.stage)).length;
   const followupsDue = commissions.filter((c) => c.followUpDate && isTodayOrPast(c.followUpDate) && !c.followUpDismissed).length;
@@ -125,10 +220,6 @@ export default function App() {
     createExperiment(formData, labsNum);
   };
 
-  const handleSidebarModule = (m) => {
-    setActiveModule(m);
-  };
-
   const handleImport = (data, mode) => {
     if (mode === 'replace') {
       replaceAllCommissions(data.commissions);
@@ -139,16 +230,12 @@ export default function App() {
       mergeLabs(data.labs);
       mergeSubscriptions(data.subscriptions);
     }
-
-    // Update global number counters so new items don't collide
     const maxSong = data.commissions.flatMap((c) => c.songs || []).reduce((m, s) => Math.max(m, s.globalNumber || 0), 0);
     const maxLabs = data.labs.reduce((m, l) => Math.max(m, l.labsGlobalNumber || 0), 0);
     const updates = {};
     if (maxSong > (settings.lastGlobalSongNumber || 0)) updates.lastGlobalSongNumber = maxSong;
     if (maxLabs > (settings.lastLabsGlobalNumber || 0)) updates.lastLabsGlobalNumber = maxLabs;
-    if (mode === 'replace') {
-      updates.lastClientNumber = data.commissions.length;
-    }
+    if (mode === 'replace') updates.lastClientNumber = data.commissions.length;
     if (Object.keys(updates).length) updateSettings(updates);
   };
 
@@ -172,6 +259,7 @@ export default function App() {
           subscriptions={subscriptions}
           labs={labs}
           onImport={handleImport}
+          userRole={currentUser.role}
         />
       );
     }
@@ -220,13 +308,15 @@ export default function App() {
       <TopNav
         activeView={activeView}
         setActiveView={(v) => { setActiveView(v); setActiveModule('pipeline'); }}
-        role={settings.currentUserRole}
+        currentUser={currentUser}
         onSettings={() => setShowSettings(true)}
+        onSignOut={handleSignOut}
       />
       <Sidebar
         activeModule={activeModule}
-        setActiveModule={handleSidebarModule}
+        setActiveModule={(m) => setActiveModule(m)}
         badges={badges}
+        userRole={currentUser.role}
       />
       <AppShell>
         {renderContent()}
@@ -237,6 +327,12 @@ export default function App() {
           settings={settings}
           onUpdate={updateSettings}
           onClose={() => setShowSettings(false)}
+          currentUser={currentUser}
+          accounts={accounts}
+          adminCount={adminCount}
+          onAddEmployee={(username, password) => createAccount(username, password, 'employee')}
+          onDeleteAccount={deleteAccount}
+          onUpdatePassword={updatePassword}
         />
       )}
     </div>

@@ -1,9 +1,10 @@
 import { useState, useRef } from 'react';
-import { Download, Upload, FileSpreadsheet, CheckCircle, AlertTriangle, Loader, AlertCircle } from 'lucide-react';
+import { Download, Upload, FileSpreadsheet, CheckCircle, AlertTriangle, Loader, AlertCircle, Lock } from 'lucide-react';
 import { exportToExcel, importFromExcel, downloadTemplate } from '../../../utils/excelIO';
 import { generateUUID } from '../../../utils/idGenerator';
 
-export default function DataPanel({ commissions, subscriptions, labs, onImport }) {
+export default function DataPanel({ commissions, subscriptions, labs, onImport, userRole }) {
+  const isAdmin = userRole === 'admin';
   const [file, setFile] = useState(null);
   const [mode, setMode] = useState('merge');
   const [importing, setImporting] = useState(false);
@@ -81,6 +82,19 @@ export default function DataPanel({ commissions, subscriptions, labs, onImport }
         Export your data to Excel, import from a spreadsheet, or download a blank template.
       </p>
 
+      {/* Admin-only notice for employees */}
+      {!isAdmin && (
+        <div className="flex items-start gap-3 p-4 rounded-lg mb-4" style={{ background: '#D4A84311', border: '1px solid #D4A84333' }}>
+          <Lock size={16} style={{ color: '#D4A843', flexShrink: 0, marginTop: 1 }} />
+          <div>
+            <p className="text-sm font-semibold mb-0.5" style={{ color: '#D4A843' }}>Import &amp; Export Restricted</p>
+            <p className="text-xs" style={{ color: '#8A9BB0' }}>
+              Excel import and export are available to admin accounts only. Contact your admin to transfer data.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Export */}
       <div style={sectionStyle} className="mb-4">
         <div className="flex items-start justify-between gap-4">
@@ -92,15 +106,22 @@ export default function DataPanel({ commissions, subscriptions, labs, onImport }
               Subscriptions ({subscriptions.length}), and Labs ({labs.length}).
             </p>
           </div>
-          <button
-            onClick={handleExport}
-            disabled={exporting}
-            className={btnBase}
-            style={{ background: '#D4A843', color: '#0A0E1A', whiteSpace: 'nowrap', flexShrink: 0 }}
-          >
-            {exporting ? <Loader size={15} className="animate-spin" /> : <Download size={15} />}
-            {exporting ? 'Exporting…' : 'Export Excel'}
-          </button>
+          {isAdmin ? (
+            <button
+              onClick={handleExport}
+              disabled={exporting}
+              className={btnBase}
+              style={{ background: '#D4A843', color: '#0A0E1A', whiteSpace: 'nowrap', flexShrink: 0 }}
+            >
+              {exporting ? <Loader size={15} className="animate-spin" /> : <Download size={15} />}
+              {exporting ? 'Exporting…' : 'Export Excel'}
+            </button>
+          ) : (
+            <div className="flex items-center gap-1.5 px-3 py-2 rounded text-xs" style={{ background: '#1E293B', color: '#4A5568', whiteSpace: 'nowrap' }}>
+              <Lock size={13} />
+              Admin only
+            </div>
+          )}
         </div>
       </div>
 
@@ -114,7 +135,7 @@ export default function DataPanel({ commissions, subscriptions, labs, onImport }
 
         {/* File picker */}
         <label
-          className="flex flex-col items-center justify-center gap-2 rounded cursor-pointer mb-4"
+          className={`flex flex-col items-center justify-center gap-2 rounded mb-4 ${isAdmin ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'}`}
           style={{
             border: `2px dashed ${file ? '#0D9488' : '#1E293B'}`,
             background: file ? '#0D948811' : '#0A0E1A',
@@ -132,6 +153,7 @@ export default function DataPanel({ commissions, subscriptions, labs, onImport }
             accept=".xlsx"
             className="hidden"
             onChange={handleFileChange}
+            disabled={!isAdmin}
           />
         </label>
 
@@ -180,9 +202,9 @@ export default function DataPanel({ commissions, subscriptions, labs, onImport }
 
         <button
           onClick={handleImport}
-          disabled={!file || importing}
+          disabled={!file || importing || !isAdmin}
           className={`${btnBase} w-full justify-center`}
-          style={{ background: file ? '#0D9488' : '#1E293B', color: file ? '#FAF3E0' : '#4A5568' }}
+          style={{ background: (file && isAdmin) ? '#0D9488' : '#1E293B', color: (file && isAdmin) ? '#FAF3E0' : '#4A5568' }}
         >
           {importing ? <Loader size={15} className="animate-spin" /> : <Upload size={15} />}
           {importing ? 'Importing…' : 'Import Data'}
@@ -236,15 +258,22 @@ export default function DataPanel({ commissions, subscriptions, labs, onImport }
               without needing an existing export.
             </p>
           </div>
-          <button
-            onClick={handleTemplate}
-            disabled={templating}
-            className={btnBase}
-            style={{ background: '#1E293B', color: '#8A9BB0', whiteSpace: 'nowrap', flexShrink: 0 }}
-          >
-            {templating ? <Loader size={15} className="animate-spin" /> : <Download size={15} />}
-            {templating ? 'Generating…' : 'Template'}
-          </button>
+          {isAdmin ? (
+            <button
+              onClick={handleTemplate}
+              disabled={templating}
+              className={btnBase}
+              style={{ background: '#1E293B', color: '#8A9BB0', whiteSpace: 'nowrap', flexShrink: 0 }}
+            >
+              {templating ? <Loader size={15} className="animate-spin" /> : <Download size={15} />}
+              {templating ? 'Generating…' : 'Template'}
+            </button>
+          ) : (
+            <div className="flex items-center gap-1.5 px-3 py-2 rounded text-xs" style={{ background: '#1E293B', color: '#4A5568', whiteSpace: 'nowrap' }}>
+              <Lock size={13} />
+              Admin only
+            </div>
+          )}
         </div>
       </div>
     </div>
